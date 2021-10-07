@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "vk_albums_saver"
+version = "0.1.0"
+description = ""
+authors = ["DmitryPolyan <dmitrystomper@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+vk-api = "^11.9.4"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
