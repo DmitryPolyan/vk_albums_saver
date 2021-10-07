@@ -4,17 +4,12 @@ import os
 import requests
 
 
-def handle_auth():
-    user_mail = input('Введите почту или телефон: ')
-    user_password = input('Введите пароль от учетной записи: ')
-    return user_mail, user_password
-
-
 def auth_handler():
     """ При двухфакторной аутентификации вызывается эта функция. """
     key = input("Enter authentication code: ")
     remember_device = True
     return key, remember_device
+
 
 def auth(user_mail: str, user_password: str) -> vk_api.VkApi:
     """Функция аутентификации"""
@@ -34,13 +29,15 @@ def download(url, file_id, newpath):
         print(f'{file_id} raised error {r.status_code}')
 
 
-def get_photos(vk, album_id):
+def get_photos(session, album_id):
     """Сохраняет фото в папку в корне"""
+    # TODO: Добавить возможность выбора папки
     newpath = os.path.join(sys.path[0], album_id)
     # TODO: Название папки по названию альбома
     if not os.path.exists(newpath):
         os.makedirs(newpath)
-    photos = vk.photos.get(album_id=album_id, count=1000)
+    photos = session.photos.get(album_id=album_id, count=1000)
+    # TODO: Добавить отображение процентов или отображение имен файлов
     for i in photos["items"]:
         url = i["sizes"][-1]["url"]
         file_id = i["id"]
@@ -48,22 +45,23 @@ def get_photos(vk, album_id):
         download(url, file_id, newpath)
 
 
-def download_album(vk: vk_api.VkApi):
+def download_album(session: vk_api.VkApi):
     """Сохраняет фотографии из альбома по указаному ID поользователя и альбома"""
-    albums = vk.photos.getAlbums()['items']
-    print(albums)
+    albums = session.photos.getAlbums()['items']
     if albums:
         for album in albums:
             print(f'{album["id"]} - {album["title"]} - {album["size"]}')
     else:
         print("empty")
     while True:
+        # TODO: Добавить возможность скачать сразу все альбомы и обновление списка альбомов
+        # TODO: Предупрждение об ограничении размера альбомов в 1000 фото (ограничение API)
         album_id = input('Enter id of album for download or enter exit: ')
         if album_id == 'exit':
             break
         elif album_id.isalnum():
             try:
-                get_photos(vk, album_id)
+                get_photos(session, album_id)
             # TODO: Реализовать корректную обработку ошибок
             except:
                 print("Something wrong")
@@ -72,11 +70,12 @@ def download_album(vk: vk_api.VkApi):
 
 
 def main():
-    user_mail, user_password = handle_auth()
-    vk = auth(user_mail, user_password)
+    user_mail = input('Введите почту или телефон: ')
+    user_password = input('Введите пароль от учетной записи: ')
+    session = auth(user_mail, user_password)
     action = input('Для выхода нажмите n, для продолжения любую клавишу')
     if action not in "nNтТ":
-        download_album(vk)
+        download_album(session)
 
 
 if __name__ == "__main__":
