@@ -1,9 +1,12 @@
 import vk_api
 import sys
 import os
-import requests
+import asyncio
+import aiohttp
+import aiofiles
 
 
+# TODO: Добавить логирование
 def auth_handler():
     """ При двухфакторной аутентификации вызывается эта функция. """
     key = input("Enter authentication code: ")
@@ -19,37 +22,47 @@ def auth(user_mail: str, user_password: str) -> vk_api.VkApi:
     return vk
 
 
-def download(url, file_id, newpath):
-    """Скачивает фото по URL"""
-    r = requests.get(url)
-    if r.status_code == 200:
-        with open(f'/{newpath}/{file_id}.jpg', 'wb') as f:
-            f.write(r.content)
-    else:
-        print(f'{file_id} raised error {r.status_code}')
+async def download(queue, session, newpath: str):
+    """Асинхронный загрузчик фотографий"""
+    while True:
+        try:
+            url = queue.get_nowait()
+            async with session.get(url) as r:
+                if r.status == 200:
+                    data = await r.read()
+                    async with aiofiles.open(newpath+"/"+url.split('/')[-1], 'wb') as file:
+                        await file.write(data)
+                else:
+                    print(f"{url.split('/')[-1]} raised error {r.status_code}")
+                queue.task_done()
+        except asyncio.QueueEmpty:
+            print("Download is done")
+            return
 
 
-def get_photos(session, album_id):
+async def get_photos(conn: vk_api.VkApi, album_id: str, album_title: str, album_size: int):
     """Сохраняет фото в папку в корне"""
     # TODO: Добавить возможность выбора папки
-    newpath = os.path.join(sys.path[0], album_id)
-    # TODO: Название папки по названию альбома
+    newpath = os.path.join(sys.path[0], album_title)
     if not os.path.exists(newpath):
         os.makedirs(newpath)
-    photos = session.photos.get(album_id=album_id, count=1000)
-    # TODO: Добавить отображение процентов или отображение имен файлов
-    for i in photos["items"]:
-        url = i["sizes"][-1]["url"]
-        file_id = i["id"]
-        # TODO: Реализовать асинхронность
-        download(url, file_id, newpath)
+    photos = conn.photos.get(album_id=album_id, count=1000)
+    urls = [i["sizes"][-1]["url"] for i in photos["items"]]
+    queue = asyncio.Queue()
+    for url in urls:
+        queue.put_nowait(url)
+    async with aiohttp.ClientSession() as session:
+        await asyncio.gather(*[download(queue, session, newpath) for i in range(album_size)])
 
 
-def download_album(session: vk_api.VkApi):
+async def download_album(conn: vk_api.VkApi):
     """Сохраняет фотографии из альбома по указаному ID поользователя и альбома"""
-    albums = session.photos.getAlbums()['items']
+    albums = conn.photos.getAlbums()['items']
+    albums_info = dict()
+
     if albums:
         for album in albums:
+            albums_info[album["id"]] = (album["title"], album["size"])
             print(f'{album["id"]} - {album["title"]} - {album["size"]}')
     else:
         print("empty")
@@ -61,7 +74,7 @@ def download_album(session: vk_api.VkApi):
             break
         elif album_id.isalnum():
             try:
-                get_photos(session, album_id)
+                await get_photos(conn, album_id, *albums_info[int(album_id)])
             # TODO: Реализовать корректную обработку ошибок
             except:
                 print("Something wrong")
@@ -69,14 +82,15 @@ def download_album(session: vk_api.VkApi):
             print('Wrong format of id')
 
 
-def main():
+async def main():
     user_mail = input('Введите почту или телефон: ')
     user_password = input('Введите пароль от учетной записи: ')
-    session = auth(user_mail, user_password)
-    action = input('Для выхода нажмите n, для продолжения любую клавишу')
-    if action not in "nNтТ":
-        download_album(session)
+    conn = auth(user_mail, user_password)
+    action = input('Для выхода нажмите n, для продолжения нажмите Entr ')
+    if action not in "nNтТ" or not action:
+        await download_album(conn)
 
 
 if __name__ == "__main__":
-    main()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())

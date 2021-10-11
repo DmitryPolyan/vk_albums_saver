@@ -7,6 +7,8 @@ authors = ["DmitryPolyan <dmitrystomper@gmail.com>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 vk-api = "^11.9.4"
+aiohttp = "^3.7.4"
+aiofiles = "^0.7.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
