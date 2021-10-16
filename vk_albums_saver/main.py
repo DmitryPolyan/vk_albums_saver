@@ -24,19 +24,21 @@ def auth(user_mail: str, user_password: str) -> vk_api.VkApi:
 
 async def download(queue, session, newpath: str):
     """Асинхронный загрузчик фотографий"""
+    counter = 0
     while True:
         try:
+            counter += 1
             url = queue.get_nowait()
             async with session.get(url) as r:
                 if r.status == 200:
                     data = await r.read()
-                    async with aiofiles.open(newpath+"/"+url.split('/')[-1], 'wb') as file:
+                    async with aiofiles.open(newpath+"/"+str(counter), 'wb') as file:
                         await file.write(data)
                 else:
                     print(f"{url.split('/')[-1]} raised error {r.status_code}")
                 queue.task_done()
+                print(f"{counter} downloaded")
         except asyncio.QueueEmpty:
-            print("Download is done")
             return
 
 
@@ -63,23 +65,42 @@ async def download_album(conn: vk_api.VkApi):
     if albums:
         for album in albums:
             albums_info[album["id"]] = (album["title"], album["size"])
-            print(f'{album["id"]} - {album["title"]} - {album["size"]}')
+            print(f'id: {album["id"]} - name: {album["title"]} - size: {album["size"]}')
     else:
         print("empty")
     while True:
         # TODO: Добавить возможность скачать сразу все альбомы и обновление списка альбомов
-        # TODO: Предупрждение об ограничении размера альбомов в 1000 фото (ограничение API)
-        album_id = input('Enter id of album for download or enter exit: ')
-        if album_id == 'exit':
+
+        # limit of vk_api - maximum 1000 photos in album
+        print("""Instruction:
+        "WARNING"
+        Album size limit - no more than 1000 photos 
+        
+        Enter id for download album
+        Enter "exit" for exit
+        Enter "all" for download all albums
+        Enter "refresh" for refresh album list """)
+        command = input("Your chose: ")
+
+        if command == 'exit':
             break
-        elif album_id.isalnum():
+        elif command == "refresh":
+            await download_album(conn)
+            break
+        elif command == "all":
             try:
-                await get_photos(conn, album_id, *albums_info[int(album_id)])
-            # TODO: Реализовать корректную обработку ошибок
+                for album in albums:
+                    await get_photos(conn, str(album["id"]), *albums_info[album["id"]])
+            except:
+                # TODO: реализовать обработку ошибок
+                print("Something wrong")
+        elif command.isalnum():
+            try:
+                await get_photos(conn, command, *albums_info[int(command)])
             except:
                 print("Something wrong")
         else:
-            print('Wrong format of id')
+            print('Wrong format of command or id')
 
 
 async def main():
