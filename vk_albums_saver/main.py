@@ -22,22 +22,20 @@ def auth(user_mail: str, user_password: str) -> vk_api.VkApi:
     return vk
 
 
-async def download(queue, session, newpath: str):
+async def download(queue, session, newpath: str, i: int):
     """Асинхронный загрузчик фотографий"""
-    counter = 0
     while True:
         try:
-            counter += 1
             url = queue.get_nowait()
             async with session.get(url) as r:
                 if r.status == 200:
                     data = await r.read()
-                    async with aiofiles.open(newpath+"/"+str(counter), 'wb') as file:
+                    async with aiofiles.open(newpath+"/"+str(i), 'wb') as file:
                         await file.write(data)
                 else:
                     print(f"{url.split('/')[-1]} raised error {r.status_code}")
                 queue.task_done()
-                print(f"{counter} downloaded")
+                print(f"{i} downloaded")
         except asyncio.QueueEmpty:
             return
 
@@ -54,7 +52,7 @@ async def get_photos(conn: vk_api.VkApi, album_id: str, album_title: str, album_
     for url in urls:
         queue.put_nowait(url)
     async with aiohttp.ClientSession() as session:
-        await asyncio.gather(*[download(queue, session, newpath) for i in range(album_size)])
+        await asyncio.gather(*[download(queue, session, newpath, i) for i in range(album_size)])
 
 
 async def download_album(conn: vk_api.VkApi):
