@@ -47,6 +47,7 @@ async def get_photos(conn: vk_api.VkApi, album_id: str, album_title: str, album_
     if not os.path.exists(newpath):
         os.makedirs(newpath)
     photos = conn.photos.get(album_id=album_id, count=1000)
+    # TODO: Качество фоток не максимальное (?)
     urls = [i["sizes"][-1]["url"] for i in photos["items"]]
     queue = asyncio.Queue()
     for url in urls:
