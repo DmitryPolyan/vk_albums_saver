@@ -47,7 +47,6 @@ async def get_photos(conn: vk_api.VkApi, album_id: str, album_title: str, album_
     if not os.path.exists(newpath):
         os.makedirs(newpath)
     photos = conn.photos.get(album_id=album_id, count=1000)
-    # TODO: Качество фоток не максимальное (?)
     urls = [i["sizes"][-1]["url"] for i in photos["items"]]
     queue = asyncio.Queue()
     for url in urls:
@@ -68,8 +67,6 @@ async def download_album(conn: vk_api.VkApi):
     else:
         print("empty")
     while True:
-        # TODO: Добавить возможность скачать сразу все альбомы и обновление списка альбомов
-
         # limit of vk_api - maximum 1000 photos in album
         print("""Instruction:
         "WARNING"
@@ -90,14 +87,13 @@ async def download_album(conn: vk_api.VkApi):
             try:
                 for album in albums:
                     await get_photos(conn, str(album["id"]), *albums_info[album["id"]])
-            except:
-                # TODO: реализовать обработку ошибок
-                print("Something wrong")
+            except Exception as e:
+                print(f"err: {e}")
         elif command.isalnum():
             try:
                 await get_photos(conn, command, *albums_info[int(command)])
-            except:
-                print("Something wrong")
+            except Exception as e:
+                print(f"err: {e}")
         else:
             print('Wrong format of command or id')
 
