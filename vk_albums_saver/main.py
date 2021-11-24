@@ -24,6 +24,7 @@ def auth(user_mail: str, user_password: str) -> vk_api.VkApi:
 
 async def download(queue, session, newpath: str, i: int):
     """Асинхронный загрузчик фотографий"""
+    counter = 0
     while True:
         try:
             url = queue.get_nowait()
@@ -36,7 +37,15 @@ async def download(queue, session, newpath: str, i: int):
                     print(f"{url.split('/')[-1]} raised error {r.status_code}")
                 queue.task_done()
                 print(f"{i} downloaded")
-        except asyncio.QueueEmpty:
+        except asyncio.TimeoutError:
+            # TODO Переделать через повторение запроса
+            counter += 1
+            if counter < 3:
+                print(f"Отправляем {url} в очередь снова")
+                queue.put_nowait(url)
+            else:
+                print(f"Не удалось скачать {url}")
+        except:
             return
 
 
@@ -51,7 +60,8 @@ async def get_photos(conn: vk_api.VkApi, album_id: str, album_title: str, album_
     queue = asyncio.Queue()
     for url in urls:
         queue.put_nowait(url)
-    async with aiohttp.ClientSession() as session:
+    timeout = aiohttp.ClientTimeout(total=7)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
         await asyncio.gather(*[download(queue, session, newpath, i) for i in range(album_size)])
 
 
@@ -87,6 +97,8 @@ async def download_album(conn: vk_api.VkApi):
             try:
                 for album in albums:
                     await get_photos(conn, str(album["id"]), *albums_info[album["id"]])
+                    await download_album(conn)
+                    break
             except Exception as e:
                 print(f"err: {e}")
         elif command.isalnum():

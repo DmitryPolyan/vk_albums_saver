@@ -193,14 +193,6 @@ socks = ["PySocks (>=1.5.6,!=1.5.7)", "win-inet-pton"]
 use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
 
 [[package]]
-name = "six"
-version = "1.16.0"
-description = "Python 2 and 3 compatibility utilities"
-category = "main"
-optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
-
-[[package]]
 name = "typing-extensions"
 version = "3.10.0.2"
 description = "Backported and Experimental Type Hints for Python 3.5+"
@@ -223,7 +215,7 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "vk-api"
-version = "11.9.4"
+version = "11.9.6"
 description = "Python модуль для создания скриптов для социальной сети Вконтакте (vk.com API wrapper)"
 category = "main"
 optional = false
@@ -231,7 +223,6 @@ python-versions = "*"
 
 [package.dependencies]
 requests = "*"
-six = "*"
 
 [package.extras]
 vkaudio = ["beautifulsoup4"]
@@ -440,10 +431,6 @@ requests = [
     {file = "requests-2.26.0-py2.py3-none-any.whl", hash = "sha256:6c1246513ecd5ecd4528a0906f910e8f0f9c6b8ec72030dc9fd154dc1a6efd24"},
     {file = "requests-2.26.0.tar.gz", hash = "sha256:b8aa58f8cf793ffd8782d3d8cb19e66ef36f7aba4353eec859e74678b01b07a7"},
 ]
-six = [
-    {file = "six-1.16.0-py2.py3-none-any.whl", hash = "sha256:8abb2f1d86890a2dfb989f9a77cfcfd3e47c2a354b01111771326f8aa26e0254"},
-    {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
-]
 typing-extensions = [
     {file = "typing_extensions-3.10.0.2-py2-none-any.whl", hash = "sha256:d8226d10bc02a29bcc81df19a26e56a9647f8b0a6d4a83924139f4a8b01f17b7"},
     {file = "typing_extensions-3.10.0.2-py3-none-any.whl", hash = "sha256:f1d25edafde516b146ecd0613dabcc61409817af4766fbbcfb8d1ad4ec441a34"},
@@ -454,7 +441,8 @@ urllib3 = [
     {file = "urllib3-1.26.7.tar.gz", hash = "sha256:4987c65554f7a2dbf30c18fd48778ef124af6fab771a377103da0585e2336ece"},
 ]
 vk-api = [
-    {file = "vk_api-11.9.4.tar.gz", hash = "sha256:1fe37717b4e104a5f55862474ff3f997e738b65eb55ee9cf8f971c31620d4aa3"},
+    {file = "vk_api-11.9.6-py3-none-any.whl", hash = "sha256:925dfce16b8103da2367f2c0a7b4fb9326d1ef4ad33dfcb9040a4362de24032d"},
+    {file = "vk_api-11.9.6.tar.gz", hash = "sha256:1afe784da4f97ddc42d80838b05278f124ffc39cf7c0fc2664a4c68501e028da"},
 ]
 wcwidth = [
     {file = "wcwidth-0.2.5-py2.py3-none-any.whl", hash = "sha256:beb4802a9cebb9144e99086eff703a642a13d6a0052920003a230f3294bbe784"},
